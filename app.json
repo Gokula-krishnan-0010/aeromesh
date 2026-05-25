@@ -13,7 +13,24 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "fetch",
+          "location",
+          "bluetooth-central",
+          "bluetooth-peripheral",
+          "processing"
+        ],
+        "BGTaskSchedulerPermittedIdentifiers": [
+          "AEROMESH_SENSOR_TASK"
+        ],
+        "NSLocationWhenInUseUsageDescription": "AeroMesh uses your location to attach GPS coordinates to barometric pressure readings and SOS events.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "AeroMesh requires background location access to collect sensor readings and detect severe weather events even when the app is not in the foreground.",
+        "NSLocationAlwaysUsageDescription": "AeroMesh requires background location access to collect sensor readings and detect severe weather events even when the app is not in the foreground.",
+        "NSBluetoothAlwaysUsageDescription": "AeroMesh uses Bluetooth to form a peer-to-peer mesh network for relaying SOS signals in areas without cellular coverage.",
+        "NSBluetoothPeripheralUsageDescription": "AeroMesh uses Bluetooth to advertise SOS signals to nearby devices in the mesh network."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,10 +38,40 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BLUETOOTH_ADVERTISE",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.SEND_SMS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-background-task",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "AeroMesh requires background location access to collect sensor readings and detect severe weather events even when the app is not in the foreground.",
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": true,
+          "modes": ["peripheral", "central"],
+          "bluetoothAlwaysPermission": "AeroMesh uses Bluetooth to form a peer-to-peer mesh network for relaying SOS signals in areas without cellular coverage."
+        }
+      ]
+    ]
   }
 }
