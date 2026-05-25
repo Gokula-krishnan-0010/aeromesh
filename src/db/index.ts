@@ -1,9 +1,9 @@
 // src/db/index.ts
 // SQLite database initialization for AeroMesh
-// Uses raw SQL CREATE TABLE IF NOT EXISTS for reliability with expo-sqlite
+// Uses expo-sqlite v16 openDatabaseSync (required by drizzle-orm/expo-sqlite adapter)
 // Requirements: 11.1, 11.2, 11.3, 11.7, 11.8
 
-import * as SQLite from 'expo-sqlite'
+import { openDatabaseSync } from 'expo-sqlite'
 import { drizzle } from 'drizzle-orm/expo-sqlite'
 import * as schema from './schema'
 
@@ -14,22 +14,24 @@ let _db: ReturnType<typeof drizzle> | null = null
  * Initialize the SQLite database, creating all tables and indexes if they
  * don't already exist. Safe to call multiple times (idempotent).
  *
+ * Uses openDatabaseSync (required by drizzle-orm/expo-sqlite which operates
+ * in sync mode). Schema setup runs via execSync before the drizzle instance
+ * is created.
+ *
  * Returns the Drizzle ORM database instance for use throughout the app.
  */
-export async function initDB(): Promise<ReturnType<typeof drizzle>> {
+export function initDB(): ReturnType<typeof drizzle> {
   if (_db) {
     return _db
   }
 
-  const sqlite = await SQLite.openDatabaseAsync('aeromesh.db')
+  const sqlite = openDatabaseSync('aeromesh.db')
 
-  // Create tables and indexes using raw SQL for maximum compatibility
-  // with expo-sqlite's WAL mode and background task contexts.
-  await sqlite.execAsync(`
+  // Create tables and indexes using raw SQL for maximum compatibility.
+  // execSync runs each statement in the semicolon-separated string.
+  sqlite.execSync(`
     PRAGMA journal_mode = WAL;
 
-    -- Model 1: pressure_readings
-    -- Stores rolling 3-hour window of barometric sensor data
     CREATE TABLE IF NOT EXISTS pressure_readings (
       id       INTEGER PRIMARY KEY AUTOINCREMENT,
       pressure REAL    NOT NULL,
@@ -39,11 +41,8 @@ export async function initDB(): Promise<ReturnType<typeof drizzle>> {
       ts       INTEGER NOT NULL
     );
 
-    -- Index for efficient range queries by timestamp (Requirement 11.7)
     CREATE INDEX IF NOT EXISTS idx_pressure_ts ON pressure_readings(ts);
 
-    -- Model 2: sos_queue (extended schema with origin and ACK fields)
-    -- Stores all SOS events pending BLE relay or SMS upload
     CREATE TABLE IF NOT EXISTS sos_queue (
       msg_id   TEXT    PRIMARY KEY,
       type     TEXT    NOT NULL,
@@ -58,11 +57,8 @@ export async function initDB(): Promise<ReturnType<typeof drizzle>> {
       ack_ts   INTEGER
     );
 
-    -- Index for efficient gateway queries (Requirement 11.8)
     CREATE INDEX IF NOT EXISTS idx_sos_uploaded ON sos_queue(uploaded);
 
-    -- Model 3: peers
-    -- Tracks currently visible BLE mesh peers
     CREATE TABLE IF NOT EXISTS peers (
       id        TEXT    PRIMARY KEY,
       rssi      INTEGER,

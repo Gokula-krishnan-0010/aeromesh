@@ -175,7 +175,8 @@ export default function App(): React.JSX.Element {
         await requestBluetoothPermissions();
 
         // Step 1: Initialize SQLite database (Req 11.1, 11.2, 11.3)
-        await initDB();
+        // initDB() is synchronous (expo-sqlite v16 + drizzle sync adapter)
+        initDB();
         console.log('[App] DB initialized');
 
         // Step 2: Start Android foreground service (Req 8.1)
